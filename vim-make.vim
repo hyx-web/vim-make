@@ -1,30 +1,21 @@
 function! BuildMake()
-    " 用户输入配置
     let l:cc = input("C Compiler [gcc]: ", "gcc")
     let l:cxx = input("C++ Compiler [g++]: ", "g++")
     let l:build_type = tolower(input("Build Type (exec/static/shared) [exec]: ", "exec"))
-    
-    " 头文件处理选项
     let l:header_deps = confirm("Enable header dependency tracking?", "&Yes\n&No", 1)
-
-    " 根据构建类型设置默认目标名
     let l:default_target = 'myapp'
     if l:build_type == 'static' | let l:default_target = 'libmyapp.a'
     elseif l:build_type == 'shared' | let l:default_target = 'libmyapp.so' | endif
     let l:target = input("Target [" . l:default_target . "]: ", l:default_target)
-
     let l:cflags = input("CFLAGS [-Wall -Wextra]: ", "-Wall -Wextra")
     let l:cxxflags = input("CXXFLAGS [-Wall -Wextra]: ", "-Wall -Wextra")
     let l:ldflags = input("LDFLAGS (e.g. -L./lib): ", "")
     let l:ldlibs = input("LDLIBS (e.g. -lm): ", "")
     let l:incflags = input("INCLUDE paths (-I): ", "-I./include")
-
-    " 构建规则生成
     let l:dep_rules = []
     if l:header_deps == 1
         let l:dep_rules = [
             \ "",
-            \ "# 头文件依赖自动生成",
             \ "DEPDIR = .deps",
             \ "DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.d",
             \ "",
@@ -47,8 +38,6 @@ function! BuildMake()
             \ "%.o: %.cpp",
             \ "\t$(CXX) $(CXXFLAGS) $(INC) -c $< -o $@"]
     endif
-
-    " 目标构建规则
     let l:target_rules = []
     if l:build_type == 'static'
         let l:target_rules = [
@@ -64,8 +53,6 @@ function! BuildMake()
             \ "$(TARGET): $(OBJ)",
             \ "\t$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)"]
     endif
-
-    " 完整Makefile内容
     let l:makefile_content = [
         \ "# Auto-generated Makefile",
         \ "CC = " . l:cc,
@@ -87,17 +74,12 @@ function! BuildMake()
         \ "clean:",
         \ "\trm -rf $(TARGET) $(OBJ) *.a *.so $(DEPDIR)",
         \ ""]
-
-    " 覆盖确认逻辑
     if filereadable('Makefile')
         let l:choice = confirm("Makefile exists. Override?", "&Yes\n&No", 1)
         if l:choice != 1 | echo "Canceled" | return | endif
     endif
-
-    " 写入文件
     call writefile(l:makefile_content, 'Makefile')
     echo "Makefile generated! Target: '" . l:target . "'"
 endfunction
 
 command! -nargs=0 BuildMake call BuildMake()
-
