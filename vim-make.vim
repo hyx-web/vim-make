@@ -82,4 +82,9 @@ function! BuildMake()
     echo "Makefile generated! Target: '" . l:target . "'"
 endfunction
 
+function! RunMake()
+    !make
+endfunction
+
 command! -nargs=0 BuildMake call BuildMake()
+command! -nargs=0 RunMake call RunMake()
